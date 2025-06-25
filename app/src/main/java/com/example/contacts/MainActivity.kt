@@ -26,9 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,18 +52,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Contacts(paddingValues: PaddingValues ,viewModel: RandomUserViewModel = viewModel()) {
-    var filteredUsers by remember { mutableStateOf<List<User>>(viewModel.users) }
-    var searched by remember { mutableStateOf<String>("") }
-
-    val usersToDisplay = if (searched.isBlank()) {
-        viewModel.users
-    } else {
-        viewModel.users.filter { user ->
-            val fullName = "${user.name.first} ${user.name.last}"
-            fullName.contains(searched, ignoreCase = true) || // Search full name
-                    user.email.contains(searched, ignoreCase = true)   // Search email
-        }
-    }
+    val searchQuery by viewModel.searchQuery
+    val filteredUsers by viewModel.filteredUsers
 
     if (viewModel.loading) {
         Column(modifier = Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
@@ -77,14 +64,14 @@ fun Contacts(paddingValues: PaddingValues ,viewModel: RandomUserViewModel = view
     } else {
         Column {
             OutlinedTextField(
-                value = searched,
-                onValueChange = {searched = it},
+                value = searchQuery,
+                onValueChange = {viewModel.onSearchQueryChange(it)},
                 label = { Text(text = "Search contacts") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
             )
             Spacer(modifier = Modifier.height(8.dp))
             LazyColumn (modifier = Modifier.fillMaxWidth().padding(paddingValues)) {
-                items(usersToDisplay) { user ->
+                items(filteredUsers) { user ->
                     Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         AsyncImage(
                             model = user.picture.large,
